@@ -25,3 +25,14 @@ def check_cookie(authtoken):
 
 # see what happens when the received cookie is used directly
 print(check_cookie(authtoken))
+
+# IV 
+IV = []
+
+for auth_byte_index in range(len(authtoken_bytes)):
+    for tester in range(256):
+        # if authtoken_bytes[auth_byte_index] xor tester == auth_byte then we have the correct byte
+        if (authtoken_bytes[auth_byte_index] ^ tester == auth_byte_index):
+            # prepend the byte to the IV
+            IV.insert(0, tester)
+            break
