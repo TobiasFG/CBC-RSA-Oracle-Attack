@@ -1,6 +1,5 @@
 # Import request library
-from audioop import reverse
-import requests
+import requests as requests
 
 # Size of the IV block
 BLOCK_SIZE = 16
@@ -10,22 +9,17 @@ URL = 'http://127.0.0.1:5000'
 URL_QUOTE = 'http://127.0.0.1:5000/quote'
 
 # get a cookie from the server with the authtoken
+def get_authtoken():
+    session = requests.Session() # create a session
+    session.get(URL) # get the url
+    cookie = session.cookies.get_dict() # get the cookie
 
-session = requests.Session() # create a session
-session.get(URL) # get the url
-cookie = session.cookies.get_dict() # get the cookie
+    authtoken = cookie['authtoken'] # The authtoken
+    return bytes.fromhex(authtoken) # authtoken as bytes
 
-authtoken = cookie['authtoken'] # The authtoken
-authtoken_bytes = bytes.fromhex(authtoken) # authtoken as bytes
-
-# Split the authtoken into blocks
+# Split the bytes into blocks
 def split_blocks(bytes):
-    blocks = []
-    for i in range(0, len(bytes), BLOCK_SIZE):
-        blocks.append(bytes[i:i+BLOCK_SIZE])
-    return blocks
-
-authtoken_blocks = split_blocks(authtoken_bytes)
+    return [bytes[i:i + BLOCK_SIZE] for i in range(0, len(bytes), BLOCK_SIZE)]
 
 # check if padding is correct
 def check_cookie(authtoken):
@@ -36,25 +30,28 @@ def check_cookie(authtoken):
     if '??' in response.text:
         return True
 
-# see what happens when the received cookie is used directly
-print(check_cookie(authtoken))
+authtoken = get_authtoken() # get an authtoken
+blocks = split_blocks(authtoken) # split the authtoken into blocks
 
-IV = [] # Initialization Vector
-PAD = [] # Padding Vector
+for block_index in reversed(range(len(blocks))): # iterate over the blocks in reverse order
+    block = blocks[block_index] # get the block
+    for byte in reversed(range(len(blocks[block_index]))): # iterate over the bytes in reverse order
+        for test_byte in range(256): # iterate over all possible bytes
+            
+            blocks[block_index][byte] = test_byte # replace the byte with the test byte
+            if check_cookie(blocks): # check if the padding is correct
+                print('Found byte: ' + test_byte) # print the byte
+                break # break the loop
 
-# For each byte in the block last block
-block = authtoken_blocks[-1]
 
-for byte in range(len(block)):
-    for tester in range(256):
-        # if block[byte] xor tester == byte then we have the correct byte
-        if (block[byte] ^ tester == byte):
-            # append the byte to the IV
-            IV.append(tester)
-            break
-    # Create a Zero Initialization Vector
-    ZIV = [byte] * len(IV)
-    # take the auth_byte_index first bytes of the auth_token
-    xorer = block[:byte]
-    # xor the ZIV with the xorer
-    IV = xorer ^ ZIV
+print(blocks)
+
+
+            
+            
+
+
+
+            
+
+
