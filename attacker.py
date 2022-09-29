@@ -17,7 +17,7 @@ topSecret = secret + ' plain CBC is not secure!'
 
 def get_authtoken():  # get a cookie from the server with the authtoken
     session = requests.Session()  # create a session
-    session.get(LIVE_URL)  # get the url
+    session.get(LIVE_URL, verify=False)  # get the url
     cookie = session.cookies.get_dict()  # get the cookie
     authtoken = cookie['authtoken']  # The authtoken
 
@@ -30,7 +30,7 @@ def to_hex(bytearray):  # bytearray to hex string
 
 def oracle(authtoken):  # check if the authtoken has valid padding
     cookie = {'authtoken': authtoken}
-    response = requests.get(LIVE_URL_QUOTE, cookies=cookie)
+    response = requests.get(LIVE_URL_QUOTE, cookies=cookie, verify=False)
     if response.text.__contains__(''''utf'''):
         return True  # valid padding
     elif response.text.__contains__('No'):
@@ -41,7 +41,7 @@ def oracle(authtoken):  # check if the authtoken has valid padding
 
 def get_quote(authtoken):  # get the quote from the server
     cookie = {'authtoken': authtoken}  # create a cookie with the authtoken
-    response = requests.get(LIVE_URL_QUOTE, cookies=cookie)  # get the quote
+    response = requests.get(LIVE_URL_QUOTE, cookies=cookie, verify=False)  # get the quote
     return response.text  # return the quote
 
 
